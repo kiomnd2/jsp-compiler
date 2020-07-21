@@ -37,7 +37,7 @@ public class JspCompilerTest {
     @Test
     public void 웹애베서_잘_컴파일찾아가는지_테스트() throws Exception
     {
-        File appDir = new File("src/test/java/webapp");
+        File appDir = new File("src/test/java/webapp/jsp");
 
         JspCompiler jspCompiler = new JspCompiler(appDir.getAbsolutePath(), outputDir.getAbsolutePath());
         jspCompiler.compile();

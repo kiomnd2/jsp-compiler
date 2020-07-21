@@ -1,10 +1,11 @@
 package com.webcash.web.jsp;
 
+import org.apache.jasper.JspCompilationContext;
 import org.apache.jasper.Options;
+import org.apache.jasper.compiler.Compiler;
 import org.apache.jasper.compiler.JspConfig;
 import org.apache.jasper.compiler.JspRuntimeContext;
 import org.apache.jasper.compiler.TagPluginManager;
-import org.apache.jasper.servlet.JspCServletContext;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
@@ -27,10 +28,12 @@ public class JspCompiler {
     private String uriRootPath;
     private String scratchDir;
     private ClassLoader classLoader;
-    private ServletContext context;
     private JspRuntimeContext runtimeContext;
     private String strFileEncoding = "UTF-8";
     private boolean bKeepGenerated = false;
+    private JspCompilationContext jspCompilationContext;
+    private boolean isServlet;
+    private ServletContext context;
 
 
     private String classPath;
@@ -46,6 +49,35 @@ public class JspCompiler {
         {
             boolean mkdirs = outputDir.mkdirs();
         }
+    }
+
+    public void setIsServlet(boolean isServlet) {
+        this.isServlet = isServlet;
+    }
+
+
+    private void setJspCompilationContext(JspCompileOption options) {
+        this.jspCompilationContext = new JspCompileContext(getUriRootPath(), options, getContext(), getRuntimeContext(), this.isServlet);
+    }
+
+    public JspCompilationContext getJspCompilationContext() {
+        return jspCompilationContext;
+    }
+
+    public JspRuntimeContext getRuntimeContext() {
+        return runtimeContext;
+    }
+
+
+    private void setRuntimeContext(JspCompileOption options) {
+        this.runtimeContext = new JspRuntimeContext(getContext(), options);
+    }
+
+    public ServletContext getContext() {
+        if(this.context == null ){
+            this.context = new JspCServletContext(new File(this.uriRootPath));
+        }
+        return context;
     }
 
     public void setUriRoot(String uriRootPath)
@@ -64,10 +96,6 @@ public class JspCompiler {
 
     public String getScratchDir() {
         return scratchDir;
-    }
-
-    public ServletContext getContext() {
-        return context;
     }
 
     public String getStrFileEncoding() {
@@ -115,9 +143,9 @@ public class JspCompiler {
         // 서블릿 초기화
         initServletContext();
 
-        //
-
-
+        // 컴파일 컨텍스트 생성
+        Compiler compiler = getJspCompilationContext().createCompiler();
+        compiler.compile();
 
     }
 
@@ -150,14 +178,11 @@ public class JspCompiler {
     {
         PrintWriter log = new PrintWriter(System.out);
         URL resourceBase = new File(uriRootPath).getCanonicalFile().toURI().toURL();
-
-        this.context = new JspCServletContext(log, resourceBase);
-
         JspCompileOption options = new JspCompileOption(this );
-
-        this.runtimeContext = new JspRuntimeContext(context, options);
-
+        setRuntimeContext(options);
+        setJspCompilationContext(options);
     }
+
 
 
 }
