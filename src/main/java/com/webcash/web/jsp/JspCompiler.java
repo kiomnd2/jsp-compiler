@@ -1,23 +1,18 @@
 package com.webcash.web.jsp;
 
 import org.apache.jasper.JspCompilationContext;
-import org.apache.jasper.Options;
 import org.apache.jasper.compiler.Compiler;
 import org.apache.jasper.compiler.JspConfig;
 import org.apache.jasper.compiler.JspRuntimeContext;
-import org.apache.jasper.compiler.TagPluginManager;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
-import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 
 public class JspCompiler {
@@ -27,20 +22,19 @@ public class JspCompiler {
 
     private String uriRootPath;
     private String scratchDir;
-    private ClassLoader classLoader;
     private JspRuntimeContext runtimeContext;
     private String strFileEncoding = "UTF-8";
     private boolean bKeepGenerated = false;
-    private JspCompilationContext jspCompilationContext;
     private boolean isServlet;
-    private ServletContext context;
+    private JspCServletContext context;
+    private JspCompileOption option;
 
 
     private String classPath;
 
 
 
-    public JspCompiler(String uriRootPath, String scratchDir) {
+    public JspCompiler(String uriRootPath, String scratchDir) throws IOException {
         this.uriRootPath = uriRootPath;
         this.scratchDir = scratchDir;
 
@@ -49,6 +43,14 @@ public class JspCompiler {
         {
             boolean mkdirs = outputDir.mkdirs();
         }
+
+        // 클래스로더
+        ClassLoader classLoader = getClassLoader();
+
+        log.debug("URL Source PATH :: " + uriRootPath);
+        log.debug("TARGET PATH :: " + scratchDir);
+
+        initServletContext();
     }
 
     public void setIsServlet(boolean isServlet) {
@@ -56,11 +58,9 @@ public class JspCompiler {
     }
 
 
-    private void setJspCompilationContext(JspCompileOption options) {
-        this.jspCompilationContext = new JspCompileContext(getUriRootPath(), options, getContext(), getRuntimeContext(), this.isServlet);
-    }
 
-    public JspCompilationContext getJspCompilationContext() {
+    public JspCompilationContext getJspCompilationContext(String jspFile) {
+        JspCompilationContext jspCompilationContext = new JspCompileContext(jspFile, option, getContext(), getRuntimeContext(), this.isServlet);
         return jspCompilationContext;
     }
 
@@ -73,11 +73,15 @@ public class JspCompiler {
         this.runtimeContext = new JspRuntimeContext(getContext(), options);
     }
 
-    public ServletContext getContext() {
+    public JspCServletContext getContext() {
         if(this.context == null ){
             this.context = new JspCServletContext(new File(this.uriRootPath));
         }
         return context;
+    }
+
+    public void addSourceRoot(File file) {
+        this.context.addSource(file);
     }
 
     public void setUriRoot(String uriRootPath)
@@ -120,31 +124,21 @@ public class JspCompiler {
         return this.strFileEncoding;
     }
 
-    public void compile() throws Exception
+    public void compile(File source) throws Exception
     {
         // 클래스 로드 전에 소스, 타겟 루트 추기화
-
-        // 클래스로더
-        if (classLoader == null)
-        {
-            this.classLoader = getClassLoader();
-        }
-
-        if (uriRootPath != null)
-        {
-            log.debug("URL Source PATH :: " + uriRootPath);
-        }
-
-        if (scratchDir != null)
-        {
-            log.debug("TARGET PATH :: " + scratchDir);
-        }
-
-        // 서블릿 초기화
-        initServletContext();
-
         // 컴파일 컨텍스트 생성
-        Compiler compiler = getJspCompilationContext().createCompiler();
+
+
+        String jspFile = source.getAbsolutePath().substring(getUriRootPath().length());
+        JspCompilationContext jspCompilationContext = getJspCompilationContext(jspFile);
+
+        //jsp에서 변환된 java file package
+
+        //jsp파일을 변화한 java파일 명. .jsp를 제외한 이름을 그대로 사용한다.
+        jspCompilationContext.setServletClassName(source.getName().substring(0, source.getName().length()-4));
+
+        Compiler compiler = jspCompilationContext.createCompiler();
         compiler.compile();
 
     }
@@ -176,11 +170,8 @@ public class JspCompiler {
 
     protected void initServletContext() throws IOException
     {
-        PrintWriter log = new PrintWriter(System.out);
-        URL resourceBase = new File(uriRootPath).getCanonicalFile().toURI().toURL();
-        JspCompileOption options = new JspCompileOption(this );
-        setRuntimeContext(options);
-        setJspCompilationContext(options);
+        option = new JspCompileOption(this );
+        setRuntimeContext(option);
     }
 
 

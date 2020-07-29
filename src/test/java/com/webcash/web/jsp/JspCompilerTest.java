@@ -1,6 +1,7 @@
 package com.webcash.web.jsp;
 
 import com.sun.org.apache.xerces.internal.xs.ItemPSVI;
+import org.apache.jasper.compiler.JspRuntimeContext;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,27 +34,28 @@ public class JspCompilerTest {
         remove(outputDir);
     }
 
-
     @Test
     public void 웹애베서_잘_컴파일찾아가는지_테스트() throws Exception
     {
-        File appDir = new File("src/test/java/webapp/jsp");
+        File appDir = new File("src/test/java/webapp");
 
         JspCompiler jspCompiler = new JspCompiler(appDir.getAbsolutePath(), outputDir.getAbsolutePath());
-        jspCompiler.compile();
-
         Assert.assertTrue(appDir.exists());
         Assert.assertTrue(outputDir.exists());
         Assert.assertNotNull( jspCompiler.getContext());
         Assert.assertNotNull( jspCompiler.getClassPath());
-
     }
 
     @Test
-    public void 컴파일_잘해서_건강한_클래스_생기는지테스트() throws Exception {
+    public void 컴파일_테스트() throws Exception {
+        File appDir = new File("src/test/java/webapp/jsp");
+        JspCompiler jspCompiler = new JspCompiler(appDir.getAbsolutePath(), outputDir.getAbsolutePath());
+        File file = new File("src/test/java/webapp/jsp/test.jsp");
+        jspCompiler.compile(file);
 
 
     }
+
 
 
     private void remove(File base) throws IOException{

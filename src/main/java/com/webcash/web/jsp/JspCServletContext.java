@@ -23,6 +23,9 @@ public class JspCServletContext implements ServletContext {
         files = new HashSet<>(Arrays.asList(source));
     }
 
+    public void addSource(File file){
+        files.add(file);
+    }
 
     @Override
     public ServletContext getContext(String s) {
@@ -82,7 +85,8 @@ public class JspCServletContext implements ServletContext {
 
     protected File getResourceFile(String file)
     {
-        Optional<File> first = this.files.stream().filter(path -> new File(path, file).exists()).findFirst();
+        Optional<File> first = this.files.stream().filter(path -> new File(path, file).exists()).findFirst()
+                .map(f -> f = new File(f, file));
         return first.orElse(null);
     }
 

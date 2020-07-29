@@ -14,12 +14,13 @@ public class JspCompileContext extends JspCompilationContext {
 
     public JspCompileContext(String uriRootPath, JspCompileOption options, ServletContext context, JspRuntimeContext runtimeContext, boolean isServlet) {
         super(uriRootPath, false, options, context, null , runtimeContext);
+
     }
 
 
     @Override
     public Compiler createCompiler() throws JasperException {
-        JDTCompiler jdtCompiler = new JDTCompiler();
+        JDTCompiler jdtCompiler = new JSPCompilerJDT();
         jdtCompiler.init(this, null);
         return jdtCompiler;
     }
